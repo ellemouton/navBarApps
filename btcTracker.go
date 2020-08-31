@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"strconv"
 	"time"
 
@@ -23,18 +22,28 @@ func fetchTicker(ctx context.Context, lc *luno.Client, pair string) (decimal.Dec
 }
 
 func displayTickersForever(lc *luno.Client, pairs []string) {
+	var (
+		display  string
+		duration time.Duration
+	)
+
 	for {
 		for _, p := range pairs {
 			d, err := fetchTicker(context.TODO(), lc, p)
 			if err != nil {
-				log.Fatal(err)
+				// Probably no internet connection. Sleep and try again later.
+				duration = time.Minute * 5
+				display = "offline"
+			} else {
+				duration = time.Minute
+				display = strconv.FormatInt(int64(d.Float64()), 10)
 			}
 
 			menuet.App().SetMenuState(&menuet.MenuState{
-				Title: "₿/ZAR:" + strconv.FormatInt(int64(d.Float64()), 10),
+				Title: "₿/ZAR:" + display,
 			})
 
-			time.Sleep(time.Minute)
+			time.Sleep(duration)
 		}
 	}
 }
